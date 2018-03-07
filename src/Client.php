@@ -4,33 +4,201 @@ namespace BertW\CoinPaymentsApi;
 
 use GuzzleHttp\Client as GuzzleClient;
 
-class Client implements CoinPaymentsInterface
+class Client implements ClientInterface
 {
-    /** @var GuzzleClient */
-    protected $client;
-
+    /** @var string */
     const BASE_URI = 'https://www.coinpayments.net/api.php';
 
-    public function __construct()
+    /** @var GuzzleClient */
+    private $client;
+
+    /** @var string Your CoinPayments public API key. */
+    protected $publicKey;
+
+    /** @var string Your CoinPayments private API key. */
+    protected $privateKey;
+
+    public function __construct($publicKey, $privateKey)
     {
+        $this->publicKey = $publicKey;
+        $this->privateKey = $privateKey;
+
         $this->client = new GuzzleClient([
-            'base_uri' => self::BASE_URI
+            'base_uri' => $this::BASE_URI
         ]);
+    }
+
+    /**
+     * Make a POST request to a specific API command.
+     * @param string $cmd
+     * @param array $fields
+     * @param array $requestOptions Allow custom options to be sent with the Guzzle request.
+     * @return mixed
+     */
+    private function request($cmd, array $fields = [], array $requestOptions = [])
+    {
+        $additionalFields = [
+            'version' => 1,
+            'cmd' => $cmd,
+            'key' => $this->publicKey,
+            'format' => 'json'
+        ];
+
+        // Validate the input. May throw exception when failed to validate.
+        $validatedFields = Validator::create($cmd, $fields)->validate();
+
+        $query = http_build_query(array_merge($validatedFields, $additionalFields), '', '&');
+        $hmac = $this->generateHMAC($query);
+        $response = $this->client->request('POST', '', array_merge_recursive($requestOptions, [
+            'headers' => [
+                'HMAC' => $hmac,
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ],
+            'body' => $query
+        ]));
+        return \GuzzleHttp\json_decode((string)$response->getBody(), true);
+    }
+
+    /**
+     * Generate an HMAC using sha512 and the private API key.
+     * @param string $str
+     * @return string
+     */
+    private function generateHMAC($str)
+    {
+        return hash_hmac('sha512', $str, $this->privateKey);
     }
 
     public function getBasicInfo()
     {
-        $response = $this->client->post('', [
-            'query' => [
-                'cmd' => 'get_basic_info'
-            ]
+        return $this->request('get_basic_info');
+    }
+
+    public function rates($short = null, $accepted = null)
+    {
+        return $this->request('rates', [
+            'short' => $short,
+            'accepted' => $accepted
         ]);
-        return \GuzzleHttp\json_decode($response->getBody());
+    }
+
+    public function balances($all = 0)
+    {
+        return $this->request('balances',[
+            'all' => $all
+        ]);
+    }
+
+    public function getDepositAddress($currency)
+    {
+        return $this->request('get_deposit_address', [
+            'currency' => $currency
+        ]);
     }
 
     public function createTransaction(array $options)
     {
+        return $this->request('create_transaction', $options);
+    }
 
+    public function getCallbackAddress($currency, $ipn_url = null)
+    {
+        return $this->request('get_callback_address', [
+            'currency' => $currency,
+            'ipn_url' => $ipn_url
+        ]);
+    }
+
+    public function getTxInfoMulti($txid)
+    {
+        return $this->request('get_tx_info_multi', [
+            'txid' => $txid
+        ]);
+    }
+
+    public function getTxInfo($txid, $full = null)
+    {
+        return $this->request('get_tx_info', [
+            'txid' => $txid,
+            'full' => $full
+        ]);
+    }
+
+    public function getTxIds($limit = null, $start = null, $newer = null, $all = null)
+    {
+        return $this->request('get_tx_ids', [
+            'limit' => $limit,
+            'start' => $start,
+            'newer' => $newer,
+            'all' => $all
+        ]);
+    }
+
+    public function createTransfer(array $options)
+    {
+        return $this->request('get_tx_ids', $options);
+    }
+
+    public function createWithdrawal(array $options)
+    {
+        // TODO: Implement createWithdrawal() method.
+    }
+
+    public function createMassWithdrawal(array $options)
+    {
+        // TODO: Implement createMassWithdrawal() method.
+    }
+
+    public function convert(array $options)
+    {
+        // TODO: Implement convert() method.
+    }
+
+    public function getWithdrawalHistory($limit = null, $start = null, $newer = null)
+    {
+        return $this->request('get_withdrawal_history', [
+            'limit' => $limit,
+            'start' => $start,
+            'newer' => $newer
+        ]);
+    }
+
+    public function getWithdrawalInfo($id)
+    {
+        return $this->request('get_withdrawal_info', [
+            'id' => $id
+        ]);
+    }
+
+    public function getConversionInfo($id)
+    {
+        return $this->request('get_conversion_info', [
+            'id' => $id
+        ]);
+    }
+
+    public function getPbnInfo($pbntag)
+    {
+        return $this->request('get_pbn_info', [
+            'pbntag' => $pbntag
+        ]);
+    }
+
+    public function getPbnList()
+    {
+        return $this->request('get_pbn_list');
+    }
+
+    public function updatePbnTag(array $options)
+    {
+        return $this->request('update_pbn_tag', $options);
+    }
+
+    public function claimPbnTag($tagid, $name)
+    {
+        return $this->request('claim_pbn_tag', [
+            'tagid' => $tagid,
+            'name' => $name
+        ]);
     }
 }
-
