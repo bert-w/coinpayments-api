@@ -46,7 +46,7 @@ API requests with more than 4 parameters use an associative array syntax like ab
 `array $options`). Simple API calls like
 `getDepositAddress`, can simply be called using `$client->getDepositAddress($currency)`.
 
-Full API
+#### Function List
 
 ```
 public function getBasicInfo();
