@@ -10,7 +10,7 @@ class Client implements ClientInterface
     const BASE_URI = 'https://www.coinpayments.net/api.php';
 
     /** @var GuzzleClient */
-    private $client;
+    public $client;
 
     /** @var string Your CoinPayments public API key. */
     protected $publicKey;
@@ -18,14 +18,19 @@ class Client implements ClientInterface
     /** @var string Your CoinPayments private API key. */
     protected $privateKey;
 
-    public function __construct($publicKey, $privateKey)
+    /**
+     * @param string $publicKey
+     * @param string $privateKey
+     * @param array $guzzleOptions Options to pass to the GuzzleClient constructor.
+     */
+    public function __construct($publicKey, $privateKey, array $guzzleOptions = [])
     {
         $this->publicKey = $publicKey;
         $this->privateKey = $privateKey;
 
-        $this->client = new GuzzleClient([
+        $this->client = new GuzzleClient(array_merge_recursive([], [
             'base_uri' => $this::BASE_URI
-        ]);
+        ]));
     }
 
     /**
@@ -48,7 +53,7 @@ class Client implements ClientInterface
         $validatedFields = Validator::create($cmd, $fields)->validate();
 
         $query = http_build_query(array_merge($validatedFields, $additionalFields), '', '&');
-        $hmac = $this->generateHMAC($query);
+        $hmac = $this::generateHMAC($query, $this->privateKey);
         $response = $this->client->request('POST', '', array_merge_recursive($requestOptions, [
             'headers' => [
                 'HMAC' => $hmac,
@@ -60,13 +65,14 @@ class Client implements ClientInterface
     }
 
     /**
-     * Generate an HMAC using sha512 and the private API key.
+     * Generate an HMAC using sha512 and a private key.
      * @param string $str
+     * @param string $key A private key of some sort.
      * @return string
      */
-    private function generateHMAC($str)
+    public static function generateHMAC($str, $key)
     {
-        return hash_hmac('sha512', $str, $this->privateKey);
+        return hash_hmac('sha512', $str, $key);
     }
 
     public function getBasicInfo()
