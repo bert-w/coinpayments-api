@@ -7,7 +7,9 @@ A PHP implementation of the CoinPayments API.
 ### Quick start
 See [CoinPayments API Doc](https://www.coinpayments.net/apidoc) for the CoinPayments API documentation.
 
-##### Code Sample
+##### Code Samples
+
+###### Retrieving basic merchant info
 ```
 $publicKey = 'your_public_api_key';
 $privateKey = 'your_private_api_key';
