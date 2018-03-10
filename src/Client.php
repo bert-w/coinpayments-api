@@ -28,7 +28,7 @@ class Client implements ClientInterface
         $this->publicKey = $publicKey;
         $this->privateKey = $privateKey;
 
-        $this->client = new GuzzleClient(array_merge_recursive([], [
+        $this->client = new GuzzleClient(array_merge_recursive($guzzleOptions, [
             'base_uri' => $this::BASE_URI
         ]));
     }
