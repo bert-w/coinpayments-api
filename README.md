@@ -1,4 +1,8 @@
 # bert-w/coinpayments-api
+[![Latest Stable Version](https://poser.pugx.org/bert-w/coinpayments-api/v/stable)](https://packagist.org/packages/bert-w/coinpayments-api)
+[![Total Downloads](https://poser.pugx.org/bert-w/coinpayments-api/downloads)](https://packagist.org/packages/bert-w/coinpayments-api)
+[![License](https://poser.pugx.org/bert-w/coinpayments-api/license)](https://packagist.org/packages/bert-w/coinpayments-api)
+
 A PHP implementation of the CoinPayments API.
 
 ### Installation instructions
